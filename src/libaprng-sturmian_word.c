@@ -1,9 +1,13 @@
 /* vim: set expandtab cindent fdm=marker ts=2 sw=2: */
 
-
 /*
-gcc -O2 -Wall -Wextra -I./ -o tree tree.c util.c
+gcc -Wall -Wextra -Wpedantic -c libaprng-sturmian_word.c libaprng-util.c
+*/
 
+/* Generate Sturmian words using method described in the article by Jiri Patera:
+GENERATING THE FIBONACCI CHAIN IN O ( log n ) SPACE AND O ( n ) TIME
+
+Sturmian word is represented as a tree
 */
 
 #include <stdlib.h>
@@ -11,76 +15,10 @@ gcc -O2 -Wall -Wextra -I./ -o tree tree.c util.c
 #include <inttypes.h>
 #include <string.h>
 #include <assert.h>
-#include "tree.h"
-#include "util.h"
+#include "libaprng-sturmian_word.h"
+#include "libaprng-util.h"
 
-inline void StackInit(stackT *stackP, int maxSize)
-{
-  stackElementT *newContents;
-
-  /* Allocate a new array to hold the contents. */
-
-  newContents = (stackElementT *)SAFEMALLOC(sizeof(stackElementT) * maxSize);
-
-  if (newContents == NULL) {
-    fprintf(stderr, "Insufficient memory to initialize stack.\n");
-    exit(1);  /* Exit, returning error code. */
-  }
-
-  stackP->contents = newContents;
-  stackP->maxSize = maxSize;
-  stackP->top = 0;  /* I.e., empty */
-  stackP->max_top_reached = 0;
-}
-
-inline void StackDestroy(stackT *stackP)
-{
-  /* Get rid of array. */
-  safe_free(stackP->contents);
-
-  stackP->contents = NULL;
-  stackP->maxSize = 0;
-  stackP->top = 0;  /* I.e., empty */
-  stackP->max_top_reached = 0;
-}
-
-inline int StackIsEmpty(stackT *stackP)
-{
-  return stackP->top == 0;
-}
-
-inline int StackIsFull(stackT *stackP)
-{
-  return stackP->top >= stackP->maxSize;
-}
-
-//TODO - ERROR handling other than exit
-inline void StackPush(stackT *stackP, stackElementT element)
-{
-  if (StackIsFull(stackP)) {
-    fprintf(stderr, "Can't push element on stack: stack is full.\n");
-    exit(1);  /* Exit, returning error code. */
-  }
-
-  /* Put information in array; update top. */
-
-  stackP->contents[stackP->top] = element;
-  ++stackP->top;
-  if (stackP->top > stackP->max_top_reached) stackP->max_top_reached = stackP->top;
-}
-
-inline stackElementT StackPop(stackT *stackP)
-{
-  if (StackIsEmpty(stackP)) {
-    fprintf(stderr, "Can't pop element from stack: stack is empty.\n");
-    exit(1);  /* Exit, returning error code. */
-  }
-
-  return stackP->contents[--stackP->top];
-}
-
-
-sturm_word_t* sturm_word_new(letter first, letter** const map, const size_t* const length, size_t map_size, size_t max_length) {
+sturm_word_t* sturm_word_new(uint8_t first, uint8_t** const map, const size_t* const length, size_t map_size, size_t max_length) {
   size_t l,s;
   size_t i,j,k;
   size_t max[2] = { 0 };
@@ -219,29 +157,29 @@ sturm_word_t* sturm_word_new(letter first, letter** const map, const size_t* con
 
   }
 
-  sturm_word->map = (letter**) SAFEMALLOC(map_size * sizeof(letter*) );
+  sturm_word->map = (uint8_t**) SAFEMALLOC(map_size * sizeof(uint8_t*) );
   sturm_word->length = (size_t*) SAFEMALLOC(map_size * sizeof(size_t));
 
   if ( level > 0 ) {
     //Expansion was successful - we need to generate new map matrix
     //fprintf(stderr, "sturm_word_new max_length Expanding to level %zu\n", level);
-    letter* temp[3];
+    uint8_t* temp[3];
     size_t cur_length[2];
-    temp[0] = SAFECALLOC(max[0], sizeof(letter));
-    temp[1] = SAFECALLOC(max[0], sizeof(letter));
+    temp[0] = SAFECALLOC(max[0], sizeof(uint8_t));
+    temp[1] = SAFECALLOC(max[0], sizeof(uint8_t));
     //temp[3] will be used to swap the pointers
 
     for(s=0; s<map_size; ++s) {
-      sturm_word->map[s] = (letter*) SAFECALLOC( length_after_expand[0][s], sizeof(letter));
+      sturm_word->map[s] = (uint8_t*) SAFECALLOC( length_after_expand[0][s], sizeof(uint8_t));
       //Now we need to derive the rule s -> {}
       memset(temp[0], 0, max[0]);
       memset(temp[1], 0, max[0]);
-      memcpy(temp[0], map[s], length[s] * sizeof(letter));
+      memcpy(temp[0], map[s], length[s] * sizeof(uint8_t));
       cur_length[0] = length[s];
       cur_length[1] = 0;
       for (l=0;l<level;++l) {
         for (i=0;i<cur_length[0];++i) {
-          memcpy(temp[1]+cur_length[1], map[temp[0][i]], length[temp[0][i]] * sizeof(letter));
+          memcpy(temp[1]+cur_length[1], map[temp[0][i]], length[temp[0][i]] * sizeof(uint8_t));
           cur_length[1] += length[temp[0][i]];
         }
         temp[2] = temp[0];
@@ -261,7 +199,7 @@ sturm_word_t* sturm_word_new(letter first, letter** const map, const size_t* con
       }
       //fprintf(stderr, "\nlength_after_expand[0][s]=%zu, cur_length[0]=%zu\n", length_after_expand[0][s], cur_length[0]);
       assert(length_after_expand[0][s] == cur_length[0] );
-      memcpy( sturm_word->map[s], temp[0],cur_length[0] * sizeof(letter));
+      memcpy( sturm_word->map[s], temp[0],cur_length[0] * sizeof(uint8_t));
       sturm_word->length[s] = cur_length[0];
     }
     safe_free(temp[0]);
@@ -269,8 +207,8 @@ sturm_word_t* sturm_word_new(letter first, letter** const map, const size_t* con
   } else {
     //Deep copy 2D map array
     for(s=0; s<map_size; ++s) {
-      sturm_word->map[s] = (letter*) SAFEMALLOC( length[s] * sizeof(letter));
-      memcpy( sturm_word->map[s], map[s],length[s] * sizeof(letter));
+      sturm_word->map[s] = (uint8_t*) SAFEMALLOC( length[s] * sizeof(uint8_t));
+      memcpy( sturm_word->map[s], map[s],length[s] * sizeof(uint8_t));
     }
     //Deep copy length array
     memcpy( sturm_word->length, length,map_size * sizeof(size_t));
@@ -306,16 +244,16 @@ void sturm_word_delete(sturm_word_t* data) {
  
 }
 
-size_t sturm_word_get_current_size(sturm_word_t* data) {
+size_t sturm_word_get_current_size(const sturm_word_t* data) {
   return sizeof(stackElementT) * data->stack.top;
 }
 
-size_t sturm_word_get_max_size(sturm_word_t* data) {
+size_t sturm_word_get_max_size(const sturm_word_t* data) {
   return sizeof(stackElementT) * data->stack.max_top_reached;
 }
 
 
-uint64_t traverse(uint64_t elements, letter* buf, sturm_word_t* data) {
+uint64_t traverse(const uint64_t elements, uint8_t* buf, sturm_word_t* data) {
 
   uint64_t generated = 0;
   stackElementT stack_data;
@@ -329,7 +267,7 @@ uint64_t traverse(uint64_t elements, letter* buf, sturm_word_t* data) {
 
   while(generated<elements) {
 
-    //Traverse all childs of the current element
+    //Traverse all children of the current element
 #if 0
     while ( data->i < data->length[data->a] && generated<elements ) {
       //fprintf(stderr, "\n map[%d, %d] = %d", data->a, data->i, data->map[data->a][data->i]);
@@ -338,12 +276,12 @@ uint64_t traverse(uint64_t elements, letter* buf, sturm_word_t* data) {
     }
 #else
     size_t n = ( (elements - generated) > (data->length[data->a] - data->i) ) ? data->length[data->a] - data->i : elements - generated;
-    memcpy(&buf[generated], &data->map[data->a][data->i], n * sizeof(letter));
+    memcpy(&buf[generated], &data->map[data->a][data->i], n * sizeof(uint8_t));
     generated += n;
     data->i   += n;
 #endif    
 
-    //We need to go up in the tree looking for the first element with untraversed childs
+    //We need to go up in the tree looking for the first element with untraversed children
     level = 0;
     while ( (! StackIsEmpty(&data->stack) ) && (data->i == data->length[data->a] ) ) {
       stack_data = StackPop(&data->stack);
@@ -353,7 +291,7 @@ uint64_t traverse(uint64_t elements, letter* buf, sturm_word_t* data) {
       ++level;
     }
 
-   //If stack is empty and there are no childs left then we have reached the root of the tree
+   //If stack is empty and there are no children left then we have reached the root of the tree
    //We need to go one level down
    //Thanks to the fix prefix we will start traverse at index = 2 (implies i = 1)
    if (  StackIsEmpty(&data->stack) && (data->i == data->length[data->a] ) ) {

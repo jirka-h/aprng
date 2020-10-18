@@ -51,7 +51,7 @@ sturm_gen_t* create_AR (const uint8_t* rule, const size_t rule_size) {
       //for (i=0; i<rule_size; ++i) {
       //  fprintf(stderr, "rule[%u] = %u\n", i, rule[i]);
       //}
-      rule[i]>2 ? fprintf(stderr,"Compiler bug?\n") : fprintf(stderr,"OK\n");
+      rule[i]>2 ? fprintf(stderr,"Compiler bug?\n") : fprintf(stderr,"Compiler still thinks that rule[%u]==%u is GREATER THAN 2\n", i, rule[i]);
       return(NULL);
     }
     ++histogram[i];

@@ -22,7 +22,7 @@ uint64_t timespecDiff(struct timespec *timeA_p, struct timespec *timeB_p)
 
 int main(int argc, char **argv)
 {
-  const unsigned int size = 4;
+  const unsigned int size = 1;
   sturm_gen_t* A[size];
   static const char* A_names[] = { "Fibonacci", "Tribonacci", "AR1", "AR2" };
   const uint8_t rule[] = { 2, 1, 0, 1, 2, 0};
@@ -37,10 +37,11 @@ int main(int argc, char **argv)
   double timeElapsed[2];
 
 
-  A[0] = create_Fibonacci();
-  A[1] = create_Tribonacci();
-  A[2] = create_AR(rule, 3);
-  A[3] = create_AR(rule, 6);
+  //A[0] = create_Fibonacci();
+  //A[1] = create_Tribonacci();
+  //A[2] = create_AR(rule, 3);
+  //A[3] = create_AR(rule, 6);
+  A[0] = create_AR(rule, 6);
 
   for (i=0; i<size; ++i) {
     if (!A[i]) continue;

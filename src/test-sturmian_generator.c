@@ -1,7 +1,7 @@
 /* vim: set expandtab cindent fdm=marker ts=2 sw=2: */
 
 /*
-gcc -O3 -Wall -Wextra -Wpedantic -I./ -o test-sturmian_generator test-sturmian_generator.c libaprng-sturmian_generator.c libaprng-sturmian_word.c libaprng-util.c -lrt
+gcc -g -O3 -Wall -Wextra -Wpedantic -I./ -o test-sturmian_generator test-sturmian_generator.c libaprng-sturmian_generator.c libaprng-sturmian_word.c libaprng-util.c -lrt
 gcc -DNDEBUG -O3 -Wall -Wextra -Wpedantic -I./ -o test-sturmian_generator test-sturmian_generator.c libaprng-sturmian_generator.c libaprng-sturmian_word.c libaprng-util.c -lrt
 */
 
@@ -43,6 +43,7 @@ int main(int argc, char **argv)
   A[3] = create_AR(rule, 6);
 
   for (i=0; i<size; ++i) {
+    if (!A[i]) continue;
 #ifdef HISTOGRAM
     histo[0]=0; histo[1]=0; histo[2]=0;
 #endif
@@ -50,7 +51,7 @@ int main(int argc, char **argv)
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[0]);
     clock_gettime(CLOCK_MONOTONIC, &t[2]);
  
-    for (j=0; j<1.0E6; ++j) {
+    for (j=0; j<1.0E3; ++j) {
       sturm_gen_get_word (A[i], buf_size, l);
 #ifdef HISTOGRAM
       for (k=0; k<buf_size; ++k) {
@@ -74,6 +75,7 @@ int main(int argc, char **argv)
       fprintf(stdout, "%" PRIu64 " %Lg%%\n", k, (long double) histo[k] / (long double) A[i]->generated * 100.0L);
     }
 #endif
+    sturm_gen_delete(A[i]);
   }
 
   return 0;

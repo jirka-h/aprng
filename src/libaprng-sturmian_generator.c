@@ -52,7 +52,7 @@ sturm_gen_t* create_AR (const uint8_t* rule, const size_t rule_size) {
       //  fprintf(stderr, "rule[%u] = %u\n", i, rule[i]);
       //}
       rule[i]>2 ? fprintf(stderr,"Compiler bug?\n") : fprintf(stderr,"OK\n");
-      exit(1);
+      return(NULL);
     }
     ++histogram[i];
   }

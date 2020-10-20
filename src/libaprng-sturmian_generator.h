@@ -61,7 +61,7 @@ inline size_t sturm_gen_get_word (sturm_gen_t* sturm_gen, const size_t elements,
   return elements;
 }
 
-void sturm_gen_status(const sturm_gen_t* sturm_gen);
+void sturm_gen_print_status(const sturm_gen_t* sturm_gen, FILE *stream);
 
 #endif
 

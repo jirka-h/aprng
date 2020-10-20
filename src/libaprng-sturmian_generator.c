@@ -19,7 +19,12 @@ Arnoux-Rauzy -
 #include "libaprng-sturmian_generator.h"
 #include "libaprng-util.h"
 
-#define MAX_LENGTH 4096
+//MAX_LENGTH: rules will be exanded to have maximum length MAX_LENGTH
+//Example: Fibonacci 0->01; 1->0
+//0->01 is expanded to 0->01->010->01001->01001010
+//1->0  is expanded to 1->0 ->01 ->010  ->01001
+//Max length of the above expansion is max(8,5)=8
+#define MAX_LENGTH 16384
 
 
 void init_buf ( buf_t* buf,const size_t size ) {
@@ -43,15 +48,9 @@ sturm_gen_t* create_AR (const uint8_t* rule, const size_t rule_size) {
   unsigned int i;
   int histogram[3]={0};
   for (i=0; i<rule_size; ++i) {
-    //fprintf(stderr, "rule[%u] = %u\n", i, rule[i]);
     if ( rule[i] > 2 ) {
-
       fprintf(stderr, "ERROR: create_AR: rule vector has to have values in range 0-2\n");
       fprintf(stderr, "rule[%u] = %u\n", i, rule[i]);
-      //for (i=0; i<rule_size; ++i) {
-      //  fprintf(stderr, "rule[%u] = %u\n", i, rule[i]);
-      //}
-      rule[i]>2 ? fprintf(stderr,"Compiler bug?\n") : fprintf(stderr,"Compiler still thinks that rule[%u]==%u is GREATER THAN 2\n", i, rule[i]);
       return(NULL);
     }
     ++histogram[rule[i]];
@@ -123,12 +122,13 @@ sturm_gen_t* create_AR (const uint8_t* rule, const size_t rule_size) {
   }
 
   //Print gen_rules
+#if 0
   for(l=0; l<3; ++l) {
     fprintf(stderr, "%d ->", l);
     printArray(gen_rules[l]);
     fprintf(stderr, "\n");
   }
-
+#endif
 
   sturm_gen_t* sturm_gen = (sturm_gen_t*) SAFEMALLOC( sizeof(sturm_gen_t) );
   size_t subst_length[3];
@@ -183,11 +183,12 @@ sturm_gen_t* create_Fibonacci () {
   sturm_gen_t* sturm_gen = (sturm_gen_t*) SAFEMALLOC( sizeof(sturm_gen_t) );
 
   size_t subst_length[] = {2, 1};
+  size_t size_subst_length = sizeof(subst_length)/sizeof(subst_length[0]);
   uint8_t subst[][2] = { {0,1}, 
-                        {0,127}};
-  uint8_t *map[sizeof(subst_length)/sizeof(uint8_t)];  //we need to map 2D array to array of arrays
-  uint8_t s;
-  for(s=0; s<sizeof(subst_length)/sizeof(uint8_t); ++s) {
+                        {0,255}};
+  uint8_t *map[size_subst_length];  //we need to map 2D array to array of arrays
+  size_t s;
+  for(s=0; s<size_subst_length; ++s) {
     map[s] = subst[s];
   }
   sturm_gen->sturm_word = sturm_word_new(0, map, subst_length, sizeof(subst_length)/sizeof(*subst_length), MAX_LENGTH );
@@ -207,14 +208,15 @@ sturm_gen_t* create_Tribonacci () {
   // 1 -> 02
   // 2 -> 0
   size_t subst_length[] = {2, 2, 1};
+  size_t size_subst_length = sizeof(subst_length)/sizeof(subst_length[0]);
   uint8_t subst[][2] = { {0,1}, 
                         {0,2},
-                        {0,127} };
+                        {0,255} };
 
 
-  uint8_t *map[sizeof(subst_length)/sizeof(uint8_t)];  //we need to map 2D array to array of arrays
-  uint8_t s;
-  for(s=0; s<sizeof(subst_length)/sizeof(uint8_t); ++s) {
+  uint8_t *map[size_subst_length];  //we need to map 2D array to array of arrays
+  size_t s;
+  for(s=0; s<size_subst_length; ++s) {
     map[s] = subst[s];
   }
   sturm_gen->sturm_word = sturm_word_new(0, map, subst_length, sizeof(subst_length)/sizeof(*subst_length), MAX_LENGTH );
@@ -227,16 +229,16 @@ sturm_gen_t* create_Tribonacci () {
   return sturm_gen;
 }
 
-void sturm_gen_status(const sturm_gen_t* sturm_gen) {
-  fprintf(stdout, "\n=======================================================================================\n");
+void sturm_gen_print_status(const sturm_gen_t* sturm_gen, FILE *stream) {
+  fprintf(stream, "\n=======================================================================================\n");
 #ifndef NDEBUG
-  fprintf(stdout, "%s, uint8_ts generated %" PRIu64 ", control sum %" PRIu64 "\n", sturm_gen->name, sturm_gen->generated, sturm_gen->sturm_word->control_sum);
+  fprintf(stream, "%s\nGenerated %" PRIu64 " elements, control sum %" PRIu64 "\n", sturm_gen->name, sturm_gen->generated, sturm_gen->sturm_word->control_sum);
 #else
-  fprintf(stdout, "%s, uint8_ts generated %" PRIu64 "\n", sturm_gen->name, sturm_gen->generated);
+  fprintf(stream, "%s\nGenerated %" PRIu64 " elements\n", sturm_gen->name, sturm_gen->generated);
 #endif
-  fprintf(stdout, "Current elements on stack to hold sturm_gen status: %zu\n", sturm_gen->sturm_word->stack.top);
-  fprintf(stdout, "Maximum elements on stack to hold sturm_gen status: %zu\n", sturm_gen->sturm_word->stack.max_top_reached);
-  fprintf(stdout, "=======================================================================================\n");
+  fprintf(stream, "Current elements on stack to hold sturm_gen status: %zu\n", sturm_gen->sturm_word->stack.top);
+  fprintf(stream, "Maximum elements on stack to hold sturm_gen status: %zu\n", sturm_gen->sturm_word->stack.max_top_reached);
+  fprintf(stream, "=======================================================================================\n");
 }
 
 void sturm_gen_delete (sturm_gen_t* sturm_gen) {

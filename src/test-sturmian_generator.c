@@ -1,7 +1,7 @@
 /* vim: set expandtab cindent fdm=marker ts=2 sw=2: */
 
 /*
-gcc -g -O3 -Wall -Wextra -Wpedantic -I./ -o test-sturmian_generator test-sturmian_generator.c libaprng-sturmian_generator.c libaprng-sturmian_word.c libaprng-util.c -lrt
+gcc -g -O3 -Wall -Wextra -Wpedantic -fsanitize=undefined -I./ -o test-sturmian_generator test-sturmian_generator.c libaprng-sturmian_generator.c libaprng-sturmian_word.c libaprng-util.c -lrt
 gcc -DNDEBUG -O3 -Wall -Wextra -Wpedantic -I./ -o test-sturmian_generator test-sturmian_generator.c libaprng-sturmian_generator.c libaprng-sturmian_word.c libaprng-util.c -lrt
 */
 
@@ -22,9 +22,8 @@ uint64_t timespecDiff(struct timespec *timeA_p, struct timespec *timeB_p)
 
 int main(int argc, char **argv)
 {
-  const unsigned int size = 1;
+  const unsigned int size = 4;
   sturm_gen_t* A[size];
-  static const char* A_names[] = { "Fibonacci", "Tribonacci", "AR1", "AR2" };
   const uint8_t rule[] = { 2, 1, 0, 1, 2, 0};
 
   uint64_t i, j;
@@ -37,11 +36,10 @@ int main(int argc, char **argv)
   double timeElapsed[2];
 
 
-  //A[0] = create_Fibonacci();
-  //A[1] = create_Tribonacci();
-  //A[2] = create_AR(rule, 3);
-  //A[3] = create_AR(rule, 6);
-  A[0] = create_AR(rule, 6);
+  A[0] = create_Fibonacci();
+  A[1] = create_Tribonacci();
+  A[2] = create_AR(rule, 3);
+  A[3] = create_AR(rule, 6);
 
   for (i=0; i<size; ++i) {
     if (!A[i]) continue;
@@ -52,7 +50,7 @@ int main(int argc, char **argv)
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t[0]);
     clock_gettime(CLOCK_MONOTONIC, &t[2]);
  
-    for (j=0; j<1.0E3; ++j) {
+    for (j=0; j<1.0E6; ++j) {
       sturm_gen_get_word (A[i], buf_size, l);
 #ifdef HISTOGRAM
       for (k=0; k<buf_size; ++k) {
@@ -64,14 +62,15 @@ int main(int argc, char **argv)
     clock_gettime(CLOCK_MONOTONIC, &t[3]);
     timeElapsed[0] = (double) timespecDiff(&t[1], &t[0]) / (double) 1E9;
     timeElapsed[1] = (double) timespecDiff(&t[3], &t[2]) / (double) 1E9;
-    fprintf(stdout, "%s\nWALLCLOCK TIME:\t%g\n"
+    sturm_gen_print_status(A[i], stdout);
+    fprintf(stdout, "Generated %Lg elements\n", (long double) A[i]->generated);
+    fprintf(stdout, "WALLCLOCK TIME:\t%g\n"
         "CPU TIME:\t%g\n"
-        "\tto generate %" PRIu64 ". Last value %d\n", 
-        A_names[i], timeElapsed[1], timeElapsed[0], j*buf_size, l[buf_size-1]);
-    fprintf(stdout, "Size of Stack in Bytes %zu, Max size of stack in Bytes %zu\n", 
-        sturm_word_get_current_size(A[i]->sturm_word), sturm_word_get_max_size(A[i]->sturm_word));
-    fprintf(stdout, "Generated %Lg\n", (long double) A[i]->generated);
+        "Last value %d\n", 
+        timeElapsed[1], timeElapsed[0], l[buf_size-1]);
+    fprintf(stdout, "\n\n");
 #ifdef HISTOGRAM
+    fprintf(stdout, "Histogram of generated values:\n");
     for (k=0; k<sizeof(histo)/sizeof(*histo); ++k) {
       fprintf(stdout, "%" PRIu64 " %Lg%%\n", k, (long double) histo[k] / (long double) A[i]->generated * 100.0L);
     }
@@ -81,4 +80,3 @@ int main(int argc, char **argv)
 
   return 0;
 }
-

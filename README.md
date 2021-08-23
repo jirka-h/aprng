@@ -1,4 +1,5 @@
-![example workflow](https://github.com/github/docs/actions/workflows/main.yml/badge.svg)
+![C workflow](https://github.com/jirka-h/aprng/actions/workflows/c-cpp.yml/badge.svg)
+![Code scanning](https://github.com/jirka-h/aprng/actions/workflows/codeql-analysis.yml/badge.svg)
 
 aprng
 =====

@@ -18,6 +18,9 @@ void* safe_calloc (size_t nmemb, size_t size, unsigned long line);
 void* safe_realloc(void *ptr, size_t size, unsigned long line);
 #define SAFEREALLOC(ptr, size) safe_realloc(ptr, size, __LINE__)
 
+FILE* safe_fopen (const char *pathname, const char *mode, unsigned long line);
+#define SAFEFOPEN(pathname, mode) safe_fopen(pathname, mode, __LINE__)
+
 void* safe_free (void *ptr);
 
 /* Simple stack to represent the SUBSTITUTION TREES */

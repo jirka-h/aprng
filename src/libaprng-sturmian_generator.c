@@ -41,7 +41,7 @@ void destroy_buf ( buf_t* buf )
   buf->data_start = NULL;
   buf->total_size = 0;
   buf->valid_data_size = 0;
-}	
+}
 
 sturm_gen_t* create_AR (const uint8_t* rule, const size_t rule_size) {
 
@@ -59,6 +59,7 @@ sturm_gen_t* create_AR (const uint8_t* rule, const size_t rule_size) {
   for (i=0; i<3; ++i) {
     if (histogram[i]==0) {
       fprintf(stderr, "ERROR: create_AR: rule vector has to have each value at least once!\n");
+      return(NULL);
     }
   }
 
@@ -80,7 +81,7 @@ sturm_gen_t* create_AR (const uint8_t* rule, const size_t rule_size) {
   //sigma_2: 0->02 1->12 2->2
   insertArray(sigma_rule[6],0); insertArray(sigma_rule[6],2);   //0->02
   insertArray(sigma_rule[7],1); insertArray(sigma_rule[7],2);   //1->12
-  insertArray(sigma_rule[8],2);                                 //2->2 
+  insertArray(sigma_rule[8],2);                                 //2->2
 
   //Generate rule
   Array* gen_rules[3]; //final rules
@@ -88,7 +89,7 @@ sturm_gen_t* create_AR (const uint8_t* rule, const size_t rule_size) {
 
   uint8_t l, m;
   int r;
-  
+
   temp[0] = initArray(1024);
   temp[1] = initArray(1024);
 
@@ -101,14 +102,14 @@ sturm_gen_t* create_AR (const uint8_t* rule, const size_t rule_size) {
     //Loop from the back over supplied rules
     for(r = rule_size-1; r>=0; --r) {
       clearArray(temp[1]);
-      
+
       //Loop the current word and apply rule
       //fprintf(stderr, "Iterating through: "); printArray(temp[0]);
       for(m=0;m<temp[0]->used;++m) {
         insertArraytoArray(temp[1],sigma_rule[rule[r]*3 + temp[0]->array[m]]);
         //fprintf(stderr, "rule %d applied to %d: ", rule[r]*3 + temp[0]->array[m], temp[0]->array[m]);printArray(temp[1]);
       }
-      
+
       //We have a new word in temp[1]. swap it
       temp[2]=temp[0];
       temp[0]=temp[1];
@@ -118,7 +119,7 @@ sturm_gen_t* create_AR (const uint8_t* rule, const size_t rule_size) {
    //Deep copy
    gen_rules[l] = initArray(temp[0]->used);
    insertArraytoArray(gen_rules[l], temp[0]);
-   
+
   }
 
   //Print gen_rules
@@ -149,7 +150,7 @@ sturm_gen_t* create_AR (const uint8_t* rule, const size_t rule_size) {
   for (i=0; i<rule_size; ++i) {
     snprintf(name+strlen(name), sizeof(name)-strlen(name), " s%d", rule[i]);
   }
-  
+
   for (l=0; l<3; ++l) {
     snprintf(name+strlen(name), sizeof(name)-strlen(name), "\n%u -> ", l);
     for(m=0; m < gen_rules[l]->used; ++m) {
@@ -184,7 +185,7 @@ sturm_gen_t* create_Fibonacci () {
 
   size_t subst_length[] = {2, 1};
   size_t size_subst_length = sizeof(subst_length)/sizeof(subst_length[0]);
-  uint8_t subst[][2] = { {0,1}, 
+  uint8_t subst[][2] = { {0,1},
                         {0,255}};
   uint8_t *map[size_subst_length];  //we need to map 2D array to array of arrays
   size_t s;
@@ -209,7 +210,7 @@ sturm_gen_t* create_Tribonacci () {
   // 2 -> 0
   size_t subst_length[] = {2, 2, 1};
   size_t size_subst_length = sizeof(subst_length)/sizeof(subst_length[0]);
-  uint8_t subst[][2] = { {0,1}, 
+  uint8_t subst[][2] = { {0,1},
                         {0,2},
                         {0,255} };
 

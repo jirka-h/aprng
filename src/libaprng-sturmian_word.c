@@ -42,7 +42,7 @@ sturm_word_t* sturm_word_new(uint8_t first, uint8_t** const map, const size_t* c
   sturm_word->control_sum = 0;
 #endif
   //Do we need to expand the rule?
- 
+
   //Iterate over all letters of alphabet
   for (l=0; l<map_size; ++l) {
     //fprintf(stderr, "length[%zu] = %zu\n", l, length[l]);
@@ -54,7 +54,7 @@ sturm_word_t* sturm_word_new(uint8_t first, uint8_t** const map, const size_t* c
     fprintf(stderr, "%zu - > ", l);
     for (s=0; s<length[l];++s) {
       fprintf(stderr, "%u,", map[l][s]);
-    } 
+    }
     fprintf(stderr, "\n");
   }
 #endif
@@ -87,7 +87,7 @@ sturm_word_t* sturm_word_new(uint8_t first, uint8_t** const map, const size_t* c
       for (s=0; s<length[l];++s) {
         M[0][map[l][s]][l]++;
         M[1][map[l][s]][l]++;
-      } 
+      }
     }
 
 #if 0
@@ -96,7 +96,7 @@ sturm_word_t* sturm_word_new(uint8_t first, uint8_t** const map, const size_t* c
         fprintf(stderr, "%zu", M[0][l][s]);
 
       }
-     fprintf(stderr, "\n"); 
+     fprintf(stderr, "\n");
     }
 #endif
 
@@ -117,7 +117,7 @@ sturm_word_t* sturm_word_new(uint8_t first, uint8_t** const map, const size_t* c
           fprintf(stderr, "%zu", M[2][l][s]);
 
         }
-        fprintf(stderr, "\n"); 
+        fprintf(stderr, "\n");
       }
 #endif
 
@@ -143,7 +143,7 @@ sturm_word_t* sturm_word_new(uint8_t first, uint8_t** const map, const size_t* c
         length_after_expand[1] = length_after_expand[2];
         max[0] = max[1];
         ++level;
-      } 
+      }
     } while ( max_length >= max[1] );
 
     for (s=0; s<map_size; ++s) {
@@ -195,7 +195,7 @@ sturm_word_t* sturm_word_new(uint8_t first, uint8_t** const map, const size_t* c
           fprintf(stderr, "%d,", temp[0][i]);
         }
         fprintf(stderr, "\n");
-#endif      
+#endif
       }
       //fprintf(stderr, "\nlength_after_expand[0][s]=%zu, cur_length[0]=%zu\n", length_after_expand[0][s], cur_length[0]);
       assert(length_after_expand[0][s] == cur_length[0] );
@@ -222,7 +222,7 @@ sturm_word_t* sturm_word_new(uint8_t first, uint8_t** const map, const size_t* c
     }
     fprintf(stderr, "\n");
   }
-#endif  
+#endif
 
   safe_free(length_after_expand[0]);
   safe_free(length_after_expand[1]);
@@ -238,10 +238,10 @@ void sturm_word_delete(sturm_word_t* data) {
     safe_free(data->map[s]);
   }
   safe_free(data->map);
-  
+
   safe_free(data->length);
   safe_free(data);
- 
+
 }
 
 size_t sturm_word_get_current_size(const sturm_word_t* data) {
@@ -279,7 +279,7 @@ uint64_t traverse(const uint64_t elements, uint8_t* buf, sturm_word_t* data) {
     memcpy(&buf[generated], &data->map[data->a][data->i], n * sizeof(uint8_t));
     generated += n;
     data->i   += n;
-#endif    
+#endif
 
     //We need to go up in the tree looking for the first element with untraversed children
     level = 0;

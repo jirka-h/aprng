@@ -58,6 +58,18 @@ void* safe_free (void *ptr)
   return NULL;
 }
 
+FILE* safe_fopen (const char *pathname, const char *mode, unsigned long line)
+{
+    errno = 0;
+    FILE* f = fopen(pathname, mode);
+    if (!f) {
+        fprintf(stderr, "[%s:%lu] fopen failed (%s, %s)\n\t%s\n",
+                __FILE__, line, pathname, mode, strerror (errno));
+        exit(EXIT_FAILURE);
+    }
+    return f;
+}
+
 /* Simple array to represent Sturmian words */
 
 Array* initArray(size_t initialSize) {

@@ -12,7 +12,7 @@ all: $(OBJS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 test: all
-	$(OUT) --gen=trib -s -o trib.test -n10000
+	./$(OUT) --gen=trib -s -o trib.test -n10000
 	diff trib.test tests/trib.txt
 
 clean:

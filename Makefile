@@ -11,5 +11,10 @@ all: $(OBJS)
 %.o: %.c $(HEADER)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
+test: all
+	$(OUT) --gen=trib -s -o trib.test -n10000
+	diff trib.test tests/trib.txt
+
 clean:
-	rm -f $(OBJS) $(OUT)
+	rm -f $(OBJS) $(OUT) trib.test
+

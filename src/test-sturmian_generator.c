@@ -30,8 +30,8 @@ static char doc[] = "Test sturmian words generation";
 static struct argp_option options[] = {
   {"gen",            'g', "NAME",   0,  "Generator to be tested: <fib,trib,AR>", 0 },
   {"statistics",     's'  , 0,      0,  "Print histogram of generated values", 0 },
-  {"write_values",   'w', "SEP",    0,  "Output values. Use SEP to separate values. In Bash, use $'\n' notation to enter newline. $'\t' for tab.", 0 },
-  {"output_file",    'o',  "FILE",   0,  "Print output values to FILE using comma as separator. Use --write_values SEP to change separator", 0 },
+  {"write_values",   'w', "SEP",    0,  "Output values. Use SEP to separate values. In Bash, use $'\\n' notation to enter newline. $'\\t' for tab.", 0 },
+  {"output_file",    'o', "FILE",   0,  "Print output values to FILE using comma as separator. Use --write_values SEP to change separator", 0 },
   {"letters",        'n', "NUMBER", 0,  "How many values. Default 1.0e10", 0 },
   {"AR_rule",        'r', "RULE",   0,  "Sigma rules which defines Arnoux-Rauzy word. Numbers from 0 to 2, each number has to be used at least once. Example: 012", 0 },
   { 0 }
@@ -42,10 +42,12 @@ struct arguments
   char *generator;
   int histogram;
   char *separator;
-  int output;
+  int output;             //Write generator output?
+  int file;               //Write to file?
   char *output_filename;
   size_t n;
   char *AR_rule;
+  int rule;               //Was -r specified?
 };
 /* Parse a single option. */
 static error_t parse_opt (int key, char *arg, struct argp_state *state) {
@@ -73,15 +75,37 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state) {
       break;
     case 'r':
       arguments->AR_rule = arg;
+      arguments->rule = 1;
       break;
     case 'o':
+      arguments->output = 1;
+      arguments->file = 1;
       arguments->output_filename = arg;
       break;
-
     case ARGP_KEY_ARG:
       if (state->arg_num > 0)
         /* Too many arguments. */
         argp_usage (state);
+      break;
+    case ARGP_KEY_INIT:
+      /* Do all initialization here */
+      arguments->generator = "fib";
+      arguments->histogram = 0;
+      arguments->output = 0;      //No output. Time generator only.
+      arguments->file = 0;        //Store generator output to file? 0=>stdout
+      arguments->separator = ",";
+      arguments->n = 1.0E9;
+      arguments->AR_rule = "";
+      arguments->rule = 0;     //Was -r specified?
+      break;
+    case ARGP_KEY_END:
+      /* Do final argument validation here */
+      if ( (strcmp(arguments->generator, "AR") == 0) && ( arguments->rule == 0 ) ) {
+        argp_error (state, "For Arnoux-Rauzy generator, the sigma rules vector is required. See option --AR_rule=RULE\n");
+      }
+      if ( (strcmp(arguments->generator, "AR") != 0) && ( arguments->rule == 1 ) ) {
+        fprintf(stderr, "Warning: --AR_rule=RULE will be ignored. It's relevant only for Arnoux-Rauzy(AR) generator.\n");
+      }
       break;
 
     default:
@@ -95,33 +119,27 @@ static struct argp argp = { options, parse_opt, 0, doc, 0, 0, 0 };
 int main(int argc, char **argv)
 {
   struct arguments arguments;
-  /* Default values. */
-  arguments.generator = "fib";
-  arguments.histogram = 0;
-  arguments.output = 0;
-  arguments.separator = ",";
-  arguments.n = 1.0E9;
-  arguments.AR_rule = "";
-  FILE* foutput;
-  char* buf = NULL;
+  FILE* foutput = stdout;
 
   argp_parse (&argp, argc, argv, 0, 0, &arguments);
 
-  if ( *arguments.output_filename != '\0' && arguments.output == 0 ) {
-    arguments.output = 1;
-  }
-
-  if ( *arguments.output_filename != '\0' ) {
-    foutput = SAFEFOPEN(arguments.output_filename, "w");
+  if ( arguments.output ) {
+    if ( arguments.file ) {
+      foutput = SAFEFOPEN(arguments.output_filename, "w");
+      fprintf(stderr, "Generator output will be stored in file '%s'\n", arguments.output_filename);
+    } else {
+      fprintf(stderr, "Generator output will be printed on stdout\n");
+      foutput = stdout;
+    }
   } else {
-    foutput = stdout;
+    fprintf(stderr, "Generator will be only tested for speed; generated values will be not printed.\n");
   }
 
   sturm_gen_t* A;
 
   uint64_t j;
   uint64_t k, histo[3];
-  const unsigned int buf_size = 10000;
+  const unsigned int buf_size = arguments.n <= 10000 ? arguments.n : 10000;
   uint8_t l[buf_size];
   struct timespec t[4];
   double timeElapsed[2];
@@ -161,6 +179,7 @@ int main(int argc, char **argv)
 
   uint64_t steps = ( arguments.n + buf_size - 1) / buf_size; //ceiling divison
   uint64_t total = steps * buf_size;
+  uint64_t remains_to_write = arguments.n;
 
   fprintf(stdout, "Testing %s generator. Generating %Lg letters\n", A->name, (long double) total);
 
@@ -176,15 +195,16 @@ int main(int argc, char **argv)
         for (k=0; k<buf_size; ++k) {
           ++histo[l[k]];
         }
+      }
       if ( arguments.output ) {
-        for (k=0; k<buf_size; ++k) {
+        uint64_t loop_limit = remains_to_write >= buf_size ? buf_size : remains_to_write;
+        for (k=0; k<loop_limit; ++k) {
           fprintf(foutput,"%d%s",l[k],arguments.separator);
         }
       }
-      }
     }
 
-    if ( *arguments.output_filename != '\0' ) {
+    if ( arguments.file ) {
       fclose(foutput);
     }
 

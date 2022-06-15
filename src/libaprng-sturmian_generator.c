@@ -8,7 +8,7 @@ gcc -Wall -Wextra -Wpedantic -c libaprng-sturmian_generator.c libaprng-sturmian_
 This is the implementation of Sturmian Words generators for
 Fibonacci - https://en.wikipedia.org/wiki/Fibonacci_word https://oeis.org/A003849
 Tribonacci - https://oeis.org/A080843
-Arnoux-Rauzy - 
+Arnoux-Rauzy - https://oeis.org/A347290 https://oeis.org/A286998
 */
 
 #include <stdlib.h>
@@ -19,11 +19,16 @@ Arnoux-Rauzy -
 #include "libaprng-sturmian_generator.h"
 #include "libaprng-util.h"
 
-//MAX_LENGTH: rules will be exanded to have maximum length MAX_LENGTH
-//Example: Fibonacci 0->01; 1->0
-//0->01 is expanded to 0->01->010->01001->01001010
-//1->0  is expanded to 1->0 ->01 ->010  ->01001
-//Max length of the above expansion is max(8,5)=8
+/*
+MAX_LENGTH: rules will be exanded to have maximum length MAX_LENGTH
+Example: Fibonacci 0->01; 1->0
+0->01 is expanded to 0->01->010->01001->01001010
+1->0  is expanded to 1->0 ->01 ->010  ->01001
+Max length of the above expansion is max(8,5)=8
+
+Precomputing these expansons is the key for high performance
+*/
+
 #define MAX_LENGTH 16384
 
 
